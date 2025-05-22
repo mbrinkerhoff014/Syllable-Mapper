@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Syllable Mapper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    #word-input {
+      margin-bottom: 20px;
+    }
+    #word-display {
+      margin: 20px 0;
+      font-size: 2em;
+      min-height: 50px;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+    .draggable {
+      display: inline-block;
+      margin: 5px;
+      padding: 10px;
+      border: 1px solid #000;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      line-height: 20px;
+      font-weight: bold;
+      cursor: grab;
+      background: #f9f9f9;
+    }
+    .symbol-container {
+      margin-bottom: 20px;
+    }
+    #legend {
+      margin-top: 30px;
+    }
+    .drop-target {
+      min-height: 50px;
+      border: 2px dashed #aaa;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Syllable Mapper</h1>
+  <input id="word-input" type="text" placeholder="Type a word here...">
+  <button onclick="renderWord()">Render</button>
+  <button onclick="resetSymbols()">Reset Symbols</button>
+
+  <div id="word-display" class="drop-target" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+
+  <div class="symbol-container">
+    <div id="symbols">
+      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-v">V</div>
+      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-c">C</div>
+      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-breve">˘</div>
+      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-macron">¯</div>
+      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-dot">.</div>
+      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-pipe">/</div>
+      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-circle">◯</div>
+    </div>
+  </div>
+
+  <div id="legend">
+    <h2>Legend</h2>
+    <ul>
+      <li><strong>V</strong> in a circle: Vowel</li>
+      <li><strong>C</strong> in a circle: Consonant</li>
+      <li><strong>˘</strong>: Breve (short vowel)</li>
+      <li><strong>¯</strong>: Macron (long vowel)</li>
+      <li><strong>.</strong>: Syllable splitter (dot)</li>
+      <li><strong>/</strong>: Syllable splitter (pipe)</li>
+      <li><strong>◯</strong>: Group of letters making one sound (digraph, trigraph, etc)</li>
+    </ul>
+  </div>
+
+  <script>
+    let dragSymbol;
+
+    function allowDrop(event) {
+      event.preventDefault();
+    }
+
+    function drag(event) {
+      dragSymbol = event.target.cloneNode(true);
+    }
+
+    function drop(event) {
+      event.preventDefault();
+      if (dragSymbol) {
+        dragSymbol.setAttribute("draggable", false);
+        dragSymbol.style.cursor = "default";
+        event.target.appendChild(dragSymbol);
+      }
+    }
+
+    function renderWord() {
+      const input = document.getElementById("word-input").value;
+      const display = document.getElementById("word-display");
+      display.innerHTML = "";
+      for (let letter of input) {
+        const span = document.createElement("span");
+        span.textContent = letter;
+        span.style.margin = "0 5px";
+        span.style.fontSize = "1.5em";
+        display.appendChild(span);
+      }
+    }
+
+    function resetSymbols() {
+      const symbolContainer = document.getElementById("symbols");
+      symbolContainer.innerHTML = "";
+
+      const symbols = [
+        { id: 'symbol-v', text: 'V' },
+        { id: 'symbol-c', text: 'C' },
+        { id: 'symbol-breve', text: '˘' },
+        { id: 'symbol-macron', text: '¯' },
+        { id: 'symbol-dot', text: '.' },
+        { id: 'symbol-pipe', text: '/' },
+        { id: 'symbol-circle', text: '◯' },
+      ];
+
+      for (let sym of symbols) {
+        const el = document.createElement("div");
+        el.className = "draggable";
+        el.setAttribute("draggable", true);
+        el.setAttribute("id", sym.id);
+        el.textContent = sym.text;
+        el.ondragstart = drag;
+        symbolContainer.appendChild(el);
+      }
+    }
+
+    resetSymbols();
+  </script>
+
+</body>
+</html>
