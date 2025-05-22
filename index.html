@@ -12,12 +12,20 @@
     #word-input {
       margin-bottom: 20px;
     }
-    #word-display {
-      margin: 20px 0;
+    .letter-container {
+      display: inline-block;
+      text-align: center;
+      margin: 5px;
+    }
+    .symbol-slot-top, .symbol-slot-bottom {
+      min-height: 30px;
+      border: 2px dashed #aaa;
+      margin: 5px;
+      padding: 2px;
+    }
+    .letter-display {
       font-size: 2em;
-      min-height: 50px;
-      border: 1px solid #ccc;
-      padding: 10px;
+      margin: 5px 0;
     }
     .draggable {
       display: inline-block;
@@ -39,11 +47,6 @@
     #legend {
       margin-top: 30px;
     }
-    .drop-target {
-      min-height: 50px;
-      border: 2px dashed #aaa;
-      padding: 10px;
-    }
   </style>
 </head>
 <body>
@@ -53,7 +56,7 @@
   <button onclick="renderWord()">Render</button>
   <button onclick="resetSymbols()">Reset Symbols</button>
 
-  <div id="word-display" class="drop-target" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+  <div id="word-display"></div>
 
   <div class="symbol-container">
     <div id="symbols">
@@ -104,12 +107,30 @@
       const input = document.getElementById("word-input").value;
       const display = document.getElementById("word-display");
       display.innerHTML = "";
+
       for (let letter of input) {
-        const span = document.createElement("span");
-        span.textContent = letter;
-        span.style.margin = "0 5px";
-        span.style.fontSize = "1.5em";
-        display.appendChild(span);
+        const container = document.createElement("div");
+        container.className = "letter-container";
+
+        const topSlot = document.createElement("div");
+        topSlot.className = "symbol-slot-top";
+        topSlot.ondragover = allowDrop;
+        topSlot.ondrop = drop;
+
+        const middle = document.createElement("div");
+        middle.className = "letter-display";
+        middle.textContent = letter;
+
+        const bottomSlot = document.createElement("div");
+        bottomSlot.className = "symbol-slot-bottom";
+        bottomSlot.ondragover = allowDrop;
+        bottomSlot.ondrop = drop;
+
+        container.appendChild(topSlot);
+        container.appendChild(middle);
+        container.appendChild(bottomSlot);
+
+        display.appendChild(container);
       }
     }
 
