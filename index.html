@@ -67,6 +67,13 @@
       align-items: center;
       flex-wrap: wrap;
     }
+    .symbol-vertical {
+      width: 4px;
+      height: 100px;
+      background: black;
+      cursor: grab;
+      border-radius: 2px;
+    }
   </style>
 </head>
 <body>
@@ -89,7 +96,7 @@
       <li><strong>˘</strong>: Breve (short vowel)</li>
       <li><strong>¯</strong>: Macron (long vowel)</li>
       <li><strong>.</strong>: Syllable splitter (dot)</li>
-      <li><strong>/</strong>: Syllable splitter (pipe)</li>
+      <li><strong>|</strong>: Syllable splitter (pipe)</li>
       <li><strong>◯</strong>: Group of letters making one sound (digraph, trigraph, etc)</li>
     </ul>
   </div>
@@ -167,8 +174,6 @@
     function resetSymbols() {
       const symbolContainer = document.getElementById("symbols");
       symbolContainer.innerHTML = "";
-      const display = document.getElementById("word-display");
-      display.innerHTML = "";
 
       const symbols = [
         { id: 'symbol-v', text: 'V', className: 'v-symbol' },
@@ -176,14 +181,13 @@
         { id: 'symbol-breve', text: '˘' },
         { id: 'symbol-macron', text: '¯' },
         { id: 'symbol-dot', text: '.' },
-        { id: 'symbol-pipe', text: '/' },
+        { id: 'symbol-pipe', text: '|', className: 'symbol-vertical' },
         { id: 'symbol-circle', text: '◯' },
       ];
 
       for (let sym of symbols) {
         const el = document.createElement("div");
-        el.className = "draggable";
-        if (sym.className) el.classList.add(sym.className);
+        el.className = sym.className ? `draggable ${sym.className}` : "draggable";
         el.setAttribute("draggable", true);
         el.setAttribute("id", sym.id);
         el.textContent = sym.text;
