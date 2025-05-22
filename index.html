@@ -15,7 +15,8 @@
     .letter-container {
       display: inline-block;
       text-align: center;
-      margin: 5px;
+      margin: 0 20px;
+      width: 50px;
     }
     .symbol-slot-top, .symbol-slot-bottom {
       min-height: 30px;
@@ -31,7 +32,6 @@
       display: inline-block;
       margin: 5px;
       padding: 10px;
-      border: 1px solid #000;
       border-radius: 50%;
       width: 40px;
       height: 40px;
@@ -40,12 +40,23 @@
       font-weight: bold;
       cursor: grab;
       background: #f9f9f9;
+      border: 2px solid #000;
     }
     .symbol-container {
       margin-bottom: 20px;
     }
     #legend {
       margin-top: 30px;
+    }
+    .v-symbol { border-color: red; color: red; }
+    .c-symbol { border-color: green; color: green; }
+    .multi-letter-wrapper {
+      position: absolute;
+      border: 2px solid #000;
+      border-radius: 50%;
+      padding: 5px;
+      background-color: rgba(255, 255, 255, 0.6);
+      pointer-events: none;
     }
   </style>
 </head>
@@ -56,17 +67,17 @@
   <button onclick="renderWord()">Render</button>
   <button onclick="resetSymbols()">Reset Symbols</button>
 
-  <div id="word-display"></div>
+  <div id="word-display" style="position: relative;"></div>
 
   <div class="symbol-container">
     <div id="symbols">
-      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-v">V</div>
-      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-c">C</div>
+      <div class="draggable v-symbol" draggable="true" ondragstart="drag(event)" id="symbol-v">V</div>
+      <div class="draggable c-symbol" draggable="true" ondragstart="drag(event)" id="symbol-c">C</div>
       <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-breve">˘</div>
       <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-macron">¯</div>
       <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-dot">.</div>
       <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-pipe">/</div>
-      <div class="draggable" draggable="true" ondragstart="drag(event)" id="symbol-circle">◯</div>
+      <div class="draggable" draggable="true" ondragstart="dragCircle(event)" id="symbol-circle">◯</div>
     </div>
   </div>
 
@@ -85,21 +96,38 @@
 
   <script>
     let dragSymbol;
+    let isCircle = false;
 
     function allowDrop(event) {
       event.preventDefault();
     }
 
     function drag(event) {
+      isCircle = false;
+      dragSymbol = event.target.cloneNode(true);
+    }
+
+    function dragCircle(event) {
+      isCircle = true;
       dragSymbol = event.target.cloneNode(true);
     }
 
     function drop(event) {
       event.preventDefault();
       if (dragSymbol) {
-        dragSymbol.setAttribute("draggable", false);
-        dragSymbol.style.cursor = "default";
-        event.target.appendChild(dragSymbol);
+        if (isCircle) {
+          const wordDisplay = document.getElementById("word-display");
+          const newCircle = document.createElement("div");
+          newCircle.className = "multi-letter-wrapper";
+          newCircle.style.left = (event.offsetX - 20) + 'px';
+          newCircle.style.top = (event.offsetY - 20) + 'px';
+          newCircle.textContent = '◯';
+          wordDisplay.appendChild(newCircle);
+        } else {
+          dragSymbol.setAttribute("draggable", false);
+          dragSymbol.style.cursor = "default";
+          event.target.appendChild(dragSymbol);
+        }
       }
     }
 
@@ -139,22 +167,23 @@
       symbolContainer.innerHTML = "";
 
       const symbols = [
-        { id: 'symbol-v', text: 'V' },
-        { id: 'symbol-c', text: 'C' },
+        { id: 'symbol-v', text: 'V', className: 'v-symbol' },
+        { id: 'symbol-c', text: 'C', className: 'c-symbol' },
         { id: 'symbol-breve', text: '˘' },
         { id: 'symbol-macron', text: '¯' },
         { id: 'symbol-dot', text: '.' },
         { id: 'symbol-pipe', text: '/' },
-        { id: 'symbol-circle', text: '◯' },
+        { id: 'symbol-circle', text: '◯', circle: true },
       ];
 
       for (let sym of symbols) {
         const el = document.createElement("div");
         el.className = "draggable";
+        if (sym.className) el.classList.add(sym.className);
         el.setAttribute("draggable", true);
         el.setAttribute("id", sym.id);
         el.textContent = sym.text;
-        el.ondragstart = drag;
+        el.ondragstart = sym.circle ? dragCircle : drag;
         symbolContainer.appendChild(el);
       }
     }
