@@ -62,6 +62,10 @@
       height: 300px;
       margin-bottom: 30px;
       border: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
     }
   </style>
 </head>
@@ -105,9 +109,12 @@
       event.preventDefault();
       if (dragSymbol) {
         const symbol = dragSymbol.cloneNode(true);
+        const displayRect = document.getElementById("word-display").getBoundingClientRect();
+        const symbolX = event.clientX - displayRect.left - 20;
+        const symbolY = event.clientY - displayRect.top - 20;
         symbol.style.position = 'absolute';
-        symbol.style.left = `${event.offsetX - 20}px`;
-        symbol.style.top = `${event.offsetY - 20}px`;
+        symbol.style.left = `${symbolX}px`;
+        symbol.style.top = `${symbolY}px`;
         symbol.setAttribute("draggable", false);
         symbol.style.cursor = "move";
         symbol.onmousedown = dragMove;
@@ -122,8 +129,9 @@
       const shiftY = e.clientY - el.getBoundingClientRect().top;
 
       function moveAt(pageX, pageY) {
-        el.style.left = pageX - shiftX + 'px';
-        el.style.top = pageY - shiftY + 'px';
+        const containerRect = document.getElementById("word-display").getBoundingClientRect();
+        el.style.left = pageX - containerRect.left - shiftX + 'px';
+        el.style.top = pageY - containerRect.top - shiftY + 'px';
       }
 
       function onMouseMove(event) {
