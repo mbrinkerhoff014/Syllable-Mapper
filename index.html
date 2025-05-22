@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Syllable Mapper</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Fredoka', sans-serif;
       padding: 20px;
     }
     #word-input {
@@ -46,8 +47,16 @@
     #legend {
       margin-top: 30px;
     }
-    .v-symbol { border-color: red; color: red; }
-    .c-symbol { border-color: green; color: green; }
+    .v-symbol {
+      border-color: red;
+      color: white;
+      background-color: red;
+    }
+    .c-symbol {
+      border-color: green;
+      color: white;
+      background-color: green;
+    }
     .multi-letter-wrapper {
       position: absolute;
       border: 2px solid #000;
@@ -68,11 +77,11 @@
       flex-wrap: wrap;
     }
     .symbol-vertical {
-      width: 4px;
+      width: 2px;
       height: 100px;
       background: black;
       cursor: grab;
-      border-radius: 2px;
+      border-radius: 1px;
     }
   </style>
 </head>
@@ -125,6 +134,13 @@
         symbol.setAttribute("draggable", false);
         symbol.style.cursor = "move";
         symbol.onmousedown = dragMove;
+        if (symbol.id === 'symbol-circle') {
+          symbol.style.width = '60px';
+          symbol.style.height = '60px';
+          symbol.style.borderRadius = '50%';
+          symbol.style.resize = 'both';
+          symbol.style.overflow = 'hidden';
+        }
         document.getElementById("word-display").appendChild(symbol);
       }
     }
@@ -182,7 +198,7 @@
         { id: 'symbol-macron', text: '¯' },
         { id: 'symbol-dot', text: '.' },
         { id: 'symbol-pipe', text: '|', className: 'symbol-vertical' },
-        { id: 'symbol-circle', text: '◯' },
+        { id: 'symbol-circle', text: '', className: 'multi-letter-wrapper' },
       ];
 
       for (let sym of symbols) {
@@ -194,6 +210,9 @@
         el.ondragstart = drag;
         symbolContainer.appendChild(el);
       }
+
+      // Also clear all dropped symbols from the word-display
+      document.getElementById("word-display").querySelectorAll(".draggable").forEach(el => el.remove());
     }
 
     resetSymbols();
