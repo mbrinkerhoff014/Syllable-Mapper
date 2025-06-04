@@ -27,12 +27,12 @@
 
     .letter-display {
       font-size: 2em;
-      margin: 20px 0; /* reduced vertical space */
+      margin: 20px 0;
     }
 
     .symbol-slot {
       position: absolute;
-      bottom: -30px; /* reduced vertical distance */
+      bottom: -30px;
       left: 50%;
       transform: translateX(-50%);
       width: 60px;
@@ -61,7 +61,7 @@
     #symbol-breve, #symbol-macron {
       border: none !important;
       background: none !important;
-      font-size: 2.5em !important;
+      font-size: 3em !important;
       font-weight: bold;
       width: auto !important;
       height: auto !important;
@@ -105,7 +105,7 @@
 
     #word-display {
       position: relative;
-      height: 200px; /* reduced height */
+      height: 180px;
       margin-bottom: 30px;
       border: 1px solid #ccc;
       display: flex;
@@ -129,6 +129,18 @@
       flex: 1;
       max-width: 300px;
     }
+
+    #legend ul {
+      columns: 2;
+      -webkit-columns: 2;
+      -moz-columns: 2;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    #legend li {
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -149,10 +161,10 @@
       <ul>
         <li><strong>V</strong>: Vowel</li>
         <li><strong>C</strong>: Consonant</li>
-        <li><strong>˘</strong>: Breve (short vowel)</li>
-        <li><strong>¯</strong>: Macron (long vowel)</li>
-        <li><strong>|</strong>: Syllable splitter (pipe)</li>
-        <li><strong>◯</strong>: Group of letters making one sound</li>
+        <li><strong>˘</strong>: Breve</li>
+        <li><strong>¯</strong>: Macron</li>
+        <li><strong>|</strong>: Syllable Splitter</li>
+        <li><strong>◯</strong>: Letter Group</li>
       </ul>
     </div>
   </div>
@@ -174,70 +186,61 @@
 
       const id = dragSymbol.getAttribute("id");
 
-      // Prevent circle from duplicating
-      if (id === 'symbol-circle') {
-        const newCircle = dragSymbol.cloneNode(true);
-        newCircle.className = "multi-letter-wrapper";
-        newCircle.removeAttribute("id");
+      // Circle or pipe - clone once only, then make draggable/movable without duplicating
+      if (id === 'symbol-circle' || id === 'symbol-pipe') {
+        const newEl = dragSymbol.cloneNode(true);
+        newEl.removeAttribute("id");
+        newEl.className = id === 'symbol-circle' ? "multi-letter-wrapper" : "symbol-vertical";
+        newEl.setAttribute("draggable", false);
 
         const wordDisplay = document.getElementById("word-display");
-        const displayRect = wordDisplay.getBoundingClientRect();
-        const x = event.clientX - displayRect.left;
-        const y = event.clientY - displayRect.top;
-
-        newCircle.style.left = `${x}px`;
-        newCircle.style.top = `${y}px`;
-
-        // Allow dragging
-        newCircle.onmousedown = dragMove;
-        wordDisplay.appendChild(newCircle);
+        const rect = wordDisplay.getBoundingClientRect();
+        newEl.style.left = (event.clientX - rect.left) + "px";
+        newEl.style.top = (event.clientY - rect.top) + "px";
+        newEl.style.position = "absolute";
+        newEl.onmousedown = dragMove;
+        wordDisplay.appendChild(newEl);
         return;
       }
 
-      // Clone for other symbols
-      const symbol = dragSymbol.cloneNode(true);
-      symbol.classList.remove("draggable");
-      symbol.style.position = "absolute";
-      symbol.style.cursor = "move";
-
-      const wordDisplay = document.getElementById("word-display");
-      const displayRect = wordDisplay.getBoundingClientRect();
-      const x = event.clientX - displayRect.left;
-      const y = event.clientY - displayRect.top;
-
-      // SNAP V/C to nearest letter container
+      // V and C snapping under letters
       if (id === 'symbol-v' || id === 'symbol-c') {
-        const containers = wordDisplay.querySelectorAll(".letter-container");
-        let closest = null;
-        let closestDistance = Infinity;
+        const symbol = dragSymbol.cloneNode(true);
+        symbol.classList.remove("draggable");
 
-        containers.forEach(c => {
-          const rect = c.getBoundingClientRect();
+        const containers = document.querySelectorAll('.letter-container');
+        let closest = null;
+        let minDist = Infinity;
+        containers.forEach(container => {
+          const rect = container.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
           const dist = Math.abs(event.clientX - centerX);
-          if (dist < closestDistance) {
-            closestDistance = dist;
-            closest = c;
+          if (dist < minDist) {
+            minDist = dist;
+            closest = container;
           }
         });
 
         if (closest) {
-          const slot = closest.querySelector(".symbol-slot");
+          const slot = closest.querySelector('.symbol-slot');
           slot.innerHTML = '';
           slot.appendChild(symbol);
-          return;
         }
+        return;
       }
 
-      // All others: free position
-      symbol.style.left = `${x - 20}px`;
-      symbol.style.top = `${y - 20}px`;
-      symbol.onmousedown = dragMove;
-      wordDisplay.appendChild(symbol);
+      // All others - freely positioned
+      const newSymbol = dragSymbol.cloneNode(true);
+      newSymbol.classList.remove("draggable");
+      newSymbol.style.position = "absolute";
+      newSymbol.style.left = event.offsetX + "px";
+      newSymbol.style.top = event.offsetY + "px";
+      newSymbol.style.cursor = "move";
+      newSymbol.onmousedown = dragMove;
+      document.getElementById("word-display").appendChild(newSymbol);
     }
 
     function dragMove(e) {
-      e.preventDefault();
       const el = e.target;
       const shiftX = e.clientX - el.getBoundingClientRect().left;
       const shiftY = e.clientY - el.getBoundingClientRect().top;
@@ -253,6 +256,7 @@
       }
 
       document.addEventListener('mousemove', onMouseMove);
+
       el.onmouseup = function () {
         document.removeEventListener('mousemove', onMouseMove);
         el.onmouseup = null;
@@ -260,31 +264,30 @@
     }
 
     function renderWord() {
-      const input = document.getElementById("word-input").value.trim();
+      const word = document.getElementById("word-input").value.trim();
       const display = document.getElementById("word-display");
       display.innerHTML = "";
 
-      for (let i = 0; i < input.length; i++) {
-        const letter = input[i];
+      for (let letter of word) {
         const container = document.createElement("div");
         container.className = "letter-container";
 
-        const middle = document.createElement("div");
-        middle.className = "letter-display";
-        middle.textContent = letter;
+        const letterEl = document.createElement("div");
+        letterEl.className = "letter-display";
+        letterEl.textContent = letter;
 
         const slot = document.createElement("div");
         slot.className = "symbol-slot";
 
-        container.appendChild(middle);
+        container.appendChild(letterEl);
         container.appendChild(slot);
         display.appendChild(container);
       }
     }
 
     function resetSymbols() {
-      const symbolContainer = document.getElementById("symbols");
-      symbolContainer.innerHTML = "";
+      const area = document.getElementById("symbols");
+      area.innerHTML = "";
 
       const symbols = [
         { id: 'symbol-v', text: 'V', className: 'v-symbol' },
@@ -295,15 +298,15 @@
         { id: 'symbol-circle', text: '' }
       ];
 
-      for (let sym of symbols) {
+      symbols.forEach(sym => {
         const el = document.createElement("div");
-        el.className = sym.className ? `draggable ${sym.className}` : "draggable";
         el.setAttribute("draggable", true);
         el.setAttribute("id", sym.id);
+        el.className = sym.className ? `draggable ${sym.className}` : "draggable";
         el.textContent = sym.text;
         el.ondragstart = drag;
-        symbolContainer.appendChild(el);
-      }
+        area.appendChild(el);
+      });
     }
 
     function resetAll() {
@@ -313,9 +316,7 @@
     }
 
     document.getElementById("word-input").addEventListener("keypress", function (e) {
-      if (e.key === 'Enter') {
-        renderWord();
-      }
+      if (e.key === "Enter") renderWord();
     });
 
     resetSymbols();
