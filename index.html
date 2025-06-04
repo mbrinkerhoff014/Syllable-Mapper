@@ -27,16 +27,17 @@
       position: relative;
     }
     .draggable {
-      #symbol-breve, #symbol-macron {
-  border: none;
-  background: none;
+     #symbol-breve, #symbol-macron {
+  border: none !important;
+  background: none !important;
   font-size: 2.5em;
   font-weight: bold;
-  width: auto;
-  height: auto;
-  line-height: normal;
-  padding: 0 10px;
+  width: auto !important;
+  height: auto !important;
+  padding: 5px 10px;
+  border-radius: 0 !important;
 }
+
 
       display: inline-block;
       margin: 5px;
@@ -80,6 +81,7 @@
   height: 60px;
   display: inline-block;
   cursor: move;
+  position: absolute;
 }
     #word-display {
       position: relative;
@@ -142,28 +144,67 @@
         const displayRect = document.getElementById("word-display").getBoundingClientRect();
         const symbolX = event.clientX - displayRect.left - 20;
         const symbolY = event.clientY - displayRect.top - 20;
-        symbol.style.position = 'absolute';
-        symbol.style.left = `${symbolX}px`;
-        symbol.style.top = `${symbolY}px`;
+       // Try to snap to nearest letter-container
+const letterContainers = document.querySelectorAll('.letter-container');
+let closest = null;
+let minDistance = Infinity;
+
+letterContainers.forEach(container => {
+  const rect = container.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const dx = event.clientX - centerX;
+  const dy = event.clientY - centerY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  if (distance < minDistance) {
+    minDistance = distance;
+    closest = container;
+  }
+});
+
+if (closest) {
+  closest.appendChild(symbol);
+  symbol.style.position = 'relative';
+  symbol.style.left = '0';
+  symbol.style.top = '0';
+}
         symbol.setAttribute("draggable", false);
         symbol.style.cursor = "move";
-        symbol.onmousedown = dragMove;
+        symbol.onpointerdown = dragMove;
         if (symbol.id === 'symbol-circle') {
-          symbol.style.width = '60px';
-          symbol.style.height = '60px';
-          symbol.style.borderRadius = '50%';
-          symbol.style.resize = 'both';
-          symbol.style.overflow = 'hidden';
-        }
+  // Remove manual style assignments
+  // Instead, just keep the class styles from CSS
+  symbol.classList.add('multi-letter-wrapper');
+}
         document.getElementById("word-display").appendChild(symbol);
       }
     }
 
     function dragMove(e) {
-      e.preventDefault();
-      const el = e.target;
-      const shiftX = e.clientX - el.getBoundingClientRect().left;
-      const shiftY = e.clientY - el.getBoundingClientRect().top;
+  e.preventDefault();
+  const el = e.target;
+  const shiftX = e.clientX - el.getBoundingClientRect().left;
+  const shiftY = e.clientY - el.getBoundingClientRect().top;
+
+  function moveAt(pageX, pageY) {
+    const containerRect = document.getElementById("word-display").getBoundingClientRect();
+    el.style.left = pageX - containerRect.left - shiftX + 'px';
+    el.style.top = pageY - containerRect.top - shiftY + 'px';
+  }
+
+  function onPointerMove(event) {
+    moveAt(event.pageX, event.pageY);
+  }
+
+  document.addEventListener('pointermove', onPointerMove);
+
+  function onPointerUp() {
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+  }
+
+  document.addEventListener('pointerup', onPointerUp);
+}
 
       function moveAt(pageX, pageY) {
         const containerRect = document.getElementById("word-display").getBoundingClientRect();
