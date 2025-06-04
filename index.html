@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Syllable Mapper</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet">
   <style>
@@ -10,35 +10,27 @@
       font-family: 'Fredoka', sans-serif;
       padding: 20px;
     }
+
     #word-input {
       margin-bottom: 20px;
       font-size: 1.2em;
       padding: 5px;
     }
+
     .letter-container {
       display: inline-block;
       text-align: center;
       margin: 0 30px;
       width: 60px;
     }
+
     .letter-display {
       font-size: 2em;
       margin: 40px 0;
       position: relative;
     }
+
     .draggable {
-     #symbol-breve, #symbol-macron {
-  border: none !important;
-  background: none !important;
-  font-size: 2.5em;
-  font-weight: bold;
-  width: auto !important;
-  height: auto !important;
-  padding: 5px 10px;
-  border-radius: 0 !important;
-}
-
-
       display: inline-block;
       margin: 5px;
       padding: 10px;
@@ -53,36 +45,55 @@
       border: 2px solid #000;
       position: relative;
     }
+
+    /* Override ˘ and ¯ styling */
+    #symbol-breve, #symbol-macron {
+      border: none !important;
+      background: none !important;
+      font-size: 2.5em !important;
+      font-weight: bold;
+      width: auto !important;
+      height: auto !important;
+      line-height: normal !important;
+      padding: 5px 10px !important;
+      border-radius: 0 !important;
+    }
+
     .symbol-container {
       margin-bottom: 20px;
     }
+
     #legend {
       margin-top: 30px;
     }
+
     .v-symbol {
       border-color: red;
       color: white;
       background-color: red;
     }
+
     .c-symbol {
       border-color: green;
       color: white;
       background-color: green;
     }
-      .multi-letter-wrapper {
-  border: 2px solid #000;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.6);
-  resize: both;
-  overflow: hidden;
-  min-width: 40px;
-  min-height: 40px;
-  width: 60px;
-  height: 60px;
-  display: inline-block;
-  cursor: move;
-  position: absolute;
-}
+
+    .multi-letter-wrapper {
+      border: 2px solid #000;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.6);
+      resize: both;
+      overflow: hidden;
+      min-width: 40px;
+      min-height: 40px;
+      width: 60px;
+      height: 60px;
+      display: inline-block;
+      cursor: move;
+      position: absolute;
+    }
+
     #word-display {
       position: relative;
       height: 300px;
@@ -93,17 +104,17 @@
       align-items: center;
       flex-wrap: wrap;
     }
+
     .symbol-vertical {
-  width: 1px;
-  height: 100px;
-  background: black;
-  cursor: grab;
-  border-radius: 1px;
-}
+      width: 1px;
+      height: 100px;
+      background: black;
+      cursor: grab;
+      border-radius: 1px;
+    }
   </style>
 </head>
 <body>
-
   <h1>Syllable Mapper</h1>
   <input id="word-input" type="text" placeholder="Type a word here...">
   <button onclick="resetSymbols()">Reset</button>
@@ -141,70 +152,29 @@
       event.preventDefault();
       if (dragSymbol) {
         const symbol = dragSymbol.cloneNode(true);
+        symbol.classList.remove("draggable"); // prevent nesting draggable-in-draggable issues
+
         const displayRect = document.getElementById("word-display").getBoundingClientRect();
         const symbolX = event.clientX - displayRect.left - 20;
         const symbolY = event.clientY - displayRect.top - 20;
-       // Try to snap to nearest letter-container
-const letterContainers = document.querySelectorAll('.letter-container');
-let closest = null;
-let minDistance = Infinity;
 
-letterContainers.forEach(container => {
-  const rect = container.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-  const dx = event.clientX - centerX;
-  const dy = event.clientY - centerY;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  if (distance < minDistance) {
-    minDistance = distance;
-    closest = container;
-  }
-});
-
-if (closest) {
-  closest.appendChild(symbol);
-  symbol.style.position = 'relative';
-  symbol.style.left = '0';
-  symbol.style.top = '0';
-}
-        symbol.setAttribute("draggable", false);
+        symbol.style.position = 'absolute';
+        symbol.style.left = `${symbolX}px`;
+        symbol.style.top = `${symbolY}px`;
         symbol.style.cursor = "move";
-        symbol.onpointerdown = dragMove;
-        if (symbol.id === 'symbol-circle') {
-  // Remove manual style assignments
-  // Instead, just keep the class styles from CSS
-  symbol.classList.add('multi-letter-wrapper');
-}
+
+        // Make movable and resizable
+        symbol.addEventListener("pointerdown", dragMove);
+
         document.getElementById("word-display").appendChild(symbol);
       }
     }
 
     function dragMove(e) {
-  e.preventDefault();
-  const el = e.target;
-  const shiftX = e.clientX - el.getBoundingClientRect().left;
-  const shiftY = e.clientY - el.getBoundingClientRect().top;
-
-  function moveAt(pageX, pageY) {
-    const containerRect = document.getElementById("word-display").getBoundingClientRect();
-    el.style.left = pageX - containerRect.left - shiftX + 'px';
-    el.style.top = pageY - containerRect.top - shiftY + 'px';
-  }
-
-  function onPointerMove(event) {
-    moveAt(event.pageX, event.pageY);
-  }
-
-  document.addEventListener('pointermove', onPointerMove);
-
-  function onPointerUp() {
-    document.removeEventListener('pointermove', onPointerMove);
-    document.removeEventListener('pointerup', onPointerUp);
-  }
-
-  document.addEventListener('pointerup', onPointerUp);
-}
+      e.preventDefault();
+      const el = e.target;
+      const shiftX = e.clientX - el.getBoundingClientRect().left;
+      const shiftY = e.clientY - el.getBoundingClientRect().top;
 
       function moveAt(pageX, pageY) {
         const containerRect = document.getElementById("word-display").getBoundingClientRect();
@@ -212,15 +182,17 @@ if (closest) {
         el.style.top = pageY - containerRect.top - shiftY + 'px';
       }
 
-      function onMouseMove(event) {
+      function onPointerMove(event) {
         moveAt(event.pageX, event.pageY);
       }
 
-      document.addEventListener('mousemove', onMouseMove);
-      el.onmouseup = function () {
-        document.removeEventListener('mousemove', onMouseMove);
-        el.onmouseup = null;
-      };
+      function onPointerUp() {
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', onPointerUp);
+      }
+
+      document.addEventListener('pointermove', onPointerMove);
+      document.addEventListener('pointerup', onPointerUp);
     }
 
     function renderWord() {
@@ -265,8 +237,7 @@ if (closest) {
         symbolContainer.appendChild(el);
       }
 
-      // Also clear all dropped symbols from the word-display
-      document.getElementById("word-display").querySelectorAll(".draggable").forEach(el => el.remove());
+      document.getElementById("word-display").querySelectorAll(".draggable, .v-symbol, .c-symbol").forEach(el => el.remove());
     }
 
     resetSymbols();
@@ -280,6 +251,6 @@ if (closest) {
       }
     });
   </script>
-
 </body>
 </html>
+
