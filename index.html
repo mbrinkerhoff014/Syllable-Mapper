@@ -20,14 +20,23 @@
     .letter-container {
       display: inline-block;
       text-align: center;
-      margin: 0 30px;
+      margin: 0 20px;
       width: 60px;
+      position: relative;
     }
 
     .letter-display {
       font-size: 2em;
       margin: 40px 0;
-      position: relative;
+    }
+
+    .symbol-slot {
+      position: absolute;
+      bottom: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 40px;
     }
 
     .draggable {
@@ -46,7 +55,7 @@
       position: relative;
     }
 
-    /* Override ˘ and ¯ styling */
+    /* Fix for breve and macron: not in circles */
     #symbol-breve, #symbol-macron {
       border: none !important;
       background: none !important;
@@ -57,14 +66,6 @@
       line-height: normal !important;
       padding: 5px 10px !important;
       border-radius: 0 !important;
-    }
-
-    .symbol-container {
-      margin-bottom: 20px;
-    }
-
-    #legend {
-      margin-top: 30px;
     }
 
     .v-symbol {
@@ -79,18 +80,23 @@
       background-color: green;
     }
 
+    .symbol-vertical {
+      width: 1px;
+      height: 100px;
+      background: black;
+      cursor: grab;
+      border-radius: 1px;
+    }
+
     .multi-letter-wrapper {
       border: 2px solid #000;
       border-radius: 50%;
       background-color: rgba(255, 255, 255, 0.6);
       resize: both;
-      overflow: hidden;
+      overflow: auto;
       min-width: 40px;
       min-height: 40px;
-      width: 60px;
-      height: 60px;
       display: inline-block;
-      cursor: move;
       position: absolute;
     }
 
@@ -101,44 +107,55 @@
       border: 1px solid #ccc;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       flex-wrap: wrap;
     }
 
-    .symbol-vertical {
-      width: 1px;
-      height: 100px;
-      background: black;
-      cursor: grab;
-      border-radius: 1px;
+    .bottom-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 40px;
+    }
+
+    .symbol-container {
+      flex: 1;
+    }
+
+    #legend {
+      flex: 1;
+      max-width: 300px;
     }
   </style>
 </head>
 <body>
   <h1>Syllable Mapper</h1>
   <input id="word-input" type="text" placeholder="Type a word here...">
-  <button onclick="resetSymbols()">Reset</button>
+  <button onclick="resetAll()">Reset</button>
 
-  <div id="word-display"></div>
+  <div id="word-display" ondragover="allowDrop(event)" ondrop="dropAnywhere(event)"></div>
 
-  <div class="symbol-container">
-    <div id="symbols"></div>
-  </div>
+  <div class="bottom-panel">
+    <div class="symbol-container">
+      <h2>Symbols</h2>
+      <div id="symbols"></div>
+    </div>
 
-  <div id="legend">
-    <h2>Legend</h2>
-    <ul>
-      <li><strong>V</strong> in a circle: Vowel</li>
-      <li><strong>C</strong> in a circle: Consonant</li>
-      <li><strong>˘</strong>: Breve (short vowel)</li>
-      <li><strong>¯</strong>: Macron (long vowel)</li>
-      <li><strong>|</strong>: Syllable splitter (pipe)</li>
-      <li><strong>◯</strong>: Group of letters making one sound (digraph, trigraph, etc)</li>
-    </ul>
+    <div id="legend">
+      <h2>Legend</h2>
+      <ul>
+        <li><strong>V</strong>: Vowel</li>
+        <li><strong>C</strong>: Consonant</li>
+        <li><strong>˘</strong>: Breve (short vowel)</li>
+        <li><strong>¯</strong>: Macron (long vowel)</li>
+        <li><strong>|</strong>: Syllable splitter (pipe)</li>
+        <li><strong>◯</strong>: Group of letters making one sound</li>
+      </ul>
+    </div>
   </div>
 
   <script>
-    let dragSymbol;
+    let dragSymbol = null;
 
     function allowDrop(event) {
       event.preventDefault();
@@ -150,24 +167,58 @@
 
     function dropAnywhere(event) {
       event.preventDefault();
-      if (dragSymbol) {
-        const symbol = dragSymbol.cloneNode(true);
-        symbol.classList.remove("draggable"); // prevent nesting draggable-in-draggable issues
+      if (!dragSymbol) return;
 
-        const displayRect = document.getElementById("word-display").getBoundingClientRect();
-        const symbolX = event.clientX - displayRect.left - 20;
-        const symbolY = event.clientY - displayRect.top - 20;
+      const symbol = dragSymbol.cloneNode(true);
+      symbol.classList.remove("draggable");
+      symbol.style.position = "absolute";
+      symbol.style.cursor = "move";
 
-        symbol.style.position = 'absolute';
-        symbol.style.left = `${symbolX}px`;
-        symbol.style.top = `${symbolY}px`;
-        symbol.style.cursor = "move";
+      const wordDisplay = document.getElementById("word-display");
+      const displayRect = wordDisplay.getBoundingClientRect();
+      const x = event.clientX - displayRect.left;
+      const y = event.clientY - displayRect.top;
 
-        // Make movable and resizable
-        symbol.addEventListener("pointerdown", dragMove);
+      // SNAP V/C to nearest letter container
+      if (dragSymbol.id === 'symbol-v' || dragSymbol.id === 'symbol-c') {
+        const containers = wordDisplay.querySelectorAll(".letter-container");
+        let closest = null;
+        let closestDistance = Infinity;
 
-        document.getElementById("word-display").appendChild(symbol);
+        containers.forEach(c => {
+          const rect = c.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const dist = Math.abs(event.clientX - centerX);
+          if (dist < closestDistance) {
+            closestDistance = dist;
+            closest = c;
+          }
+        });
+
+        if (closest) {
+          const slot = closest.querySelector(".symbol-slot");
+          slot.innerHTML = '';
+          slot.appendChild(symbol);
+          return;
+        }
       }
+
+      // Make circle resizable
+      if (dragSymbol.id === 'symbol-circle') {
+        symbol.className = "multi-letter-wrapper";
+        symbol.style.left = `${x}px`;
+        symbol.style.top = `${y}px`;
+        symbol.style.resize = "both";
+        symbol.style.overflow = "auto";
+        wordDisplay.appendChild(symbol);
+        return;
+      }
+
+      // All others: free position
+      symbol.style.left = `${x - 20}px`;
+      symbol.style.top = `${y - 20}px`;
+      symbol.onmousedown = dragMove;
+      wordDisplay.appendChild(symbol);
     }
 
     function dragMove(e) {
@@ -182,21 +233,19 @@
         el.style.top = pageY - containerRect.top - shiftY + 'px';
       }
 
-      function onPointerMove(event) {
+      function onMouseMove(event) {
         moveAt(event.pageX, event.pageY);
       }
 
-      function onPointerUp() {
-        document.removeEventListener('pointermove', onPointerMove);
-        document.removeEventListener('pointerup', onPointerUp);
-      }
-
-      document.addEventListener('pointermove', onPointerMove);
-      document.addEventListener('pointerup', onPointerUp);
+      document.addEventListener('mousemove', onMouseMove);
+      el.onmouseup = function () {
+        document.removeEventListener('mousemove', onMouseMove);
+        el.onmouseup = null;
+      };
     }
 
     function renderWord() {
-      const input = document.getElementById("word-input").value;
+      const input = document.getElementById("word-input").value.trim();
       const display = document.getElementById("word-display");
       display.innerHTML = "";
 
@@ -209,7 +258,11 @@
         middle.className = "letter-display";
         middle.textContent = letter;
 
+        const slot = document.createElement("div");
+        slot.className = "symbol-slot";
+
         container.appendChild(middle);
+        container.appendChild(slot);
         display.appendChild(container);
       }
     }
@@ -224,7 +277,7 @@
         { id: 'symbol-breve', text: '˘' },
         { id: 'symbol-macron', text: '¯' },
         { id: 'symbol-pipe', text: '|', className: 'symbol-vertical' },
-        { id: 'symbol-circle', text: '', className: 'multi-letter-wrapper' },
+        { id: 'symbol-circle', text: '' }
       ];
 
       for (let sym of symbols) {
@@ -236,21 +289,21 @@
         el.ondragstart = drag;
         symbolContainer.appendChild(el);
       }
-
-      document.getElementById("word-display").querySelectorAll(".draggable, .v-symbol, .c-symbol").forEach(el => el.remove());
     }
 
-    resetSymbols();
-
-    document.getElementById("word-display").addEventListener("dragover", allowDrop);
-    document.getElementById("word-display").addEventListener("drop", dropAnywhere);
+    function resetAll() {
+      document.getElementById("word-input").value = '';
+      document.getElementById("word-display").innerHTML = '';
+      resetSymbols();
+    }
 
     document.getElementById("word-input").addEventListener("keypress", function (e) {
       if (e.key === 'Enter') {
         renderWord();
       }
     });
+
+    resetSymbols();
   </script>
 </body>
 </html>
-
