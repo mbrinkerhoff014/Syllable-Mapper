@@ -9,112 +9,113 @@
     body {
       font-family: 'Fredoka', sans-serif;
       padding: 20px;
-      margin: 0;
     }
-
     #word-input {
-      margin-bottom: 10px;
+      margin-bottom: 20px;
       font-size: 1.2em;
       padding: 5px;
     }
-
     .letter-container {
       display: inline-block;
       text-align: center;
-      margin: 0 15px;
+      margin: 0 10px;
       width: 60px;
       position: relative;
     }
-
     .letter-display {
       font-size: 2em;
-      margin: 30px 0;
-      position: relative;
+      margin: 60px 0;
     }
-
     .draggable {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       margin: 5px;
-      padding: 8px;
-      text-align: center;
+      padding: 10px;
       font-weight: bold;
       cursor: grab;
-      font-size: 22px;
+      background: #f9f9f9;
+      border: 2px solid #000;
+      position: relative;
     }
-
     .v-symbol {
+      border-color: red;
       color: white;
       background-color: red;
       border-radius: 50%;
       width: 40px;
       height: 40px;
-      line-height: 40px;
     }
-
     .c-symbol {
+      border-color: green;
       color: white;
       background-color: green;
       border-radius: 50%;
       width: 40px;
       height: 40px;
-      line-height: 40px;
     }
-
-    .breve-symbol, .macron-symbol {
-      font-size: 32px;
+    .symbol-mark {
+      font-size: 28px;
+      font-weight: bold;
+      background: none;
+      border: none;
+      width: auto;
+      height: auto;
+      padding: 0 8px;
     }
-
-    #word-display {
-      position: relative;
-      height: 160px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      display: flex;
-      justify-content: center;
-      align-items: end;
-      flex-wrap: wrap;
-    }
-
-    .symbol-container {
-      margin-top: 0;
-      display: flex;
-      align-items: flex-start;
-    }
-
-    #symbols {
-      flex: 1;
-    }
-
-    .multi-letter-wrapper {
-      position: absolute;
-      border: 2px solid #000;
-      border-radius: 50%;
-      padding: 5px;
-      background-color: rgba(255, 255, 255, 0.6);
-      resize: both;
-      overflow: hidden;
-      width: 80px;
-      height: 80px;
-      cursor: grab;
-    }
-
     .symbol-vertical {
-      width: 2px;
+      width: 1.5px;
       height: 100px;
       background: black;
       cursor: grab;
     }
-
+    .circle-symbol {
+      position: absolute;
+      border: 2px solid #000;
+      background-color: rgba(255, 255, 255, 0.6);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      cursor: grab;
+    }
+    .circle-resize-handle {
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      background: black;
+      cursor: ew-resize;
+      transform: translateY(-50%);
+    }
+    #word-display {
+      position: relative;
+      min-height: 200px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      padding: 20px;
+    }
+    .symbol-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      align-items: flex-start;
+    }
+    #symbols {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 600px;
+    }
     #legend {
-      flex: 1;
+      margin-left: 40px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 5px 20px;
-      padding-left: 20px;
-    }
-
-    #legend h2 {
-      grid-column: span 2;
+      gap: 8px;
+      font-size: 0.95em;
     }
   </style>
 </head>
@@ -122,165 +123,149 @@
 
   <h1>Syllable Mapper</h1>
   <input id="word-input" type="text" placeholder="Type a word here..." />
-  <button onclick="resetSymbols()">Reset</button>
+  <button onclick="resetAll()">Reset</button>
 
-  <div id="word-display" ondragover="allowDrop(event)" ondrop="dropAnywhere(event)"></div>
+  <div id="word-display" ondragover="allowDrop(event)" ondrop="dropSymbol(event)"></div>
 
   <div class="symbol-container">
     <div id="symbols"></div>
     <div id="legend">
-      <h2>Legend</h2>
-      <div><strong>V</strong>: Vowel</div>
-      <div><strong>C</strong>: Consonant</div>
-      <div><strong>˘</strong>: Breve</div>
-      <div><strong>¯</strong>: Macron</div>
+      <div><strong>V</strong> in a circle: Vowel</div>
+      <div><strong>C</strong> in a circle: Consonant</div>
+      <div><strong>˘</strong>: Breve (short vowel)</div>
+      <div><strong>¯</strong>: Macron (long vowel)</div>
       <div><strong>|</strong>: Syllable splitter (pipe)</div>
-      <div><strong>◯</strong>: Letter group (digraph, etc)</div>
+      <div><strong>◯</strong>: Group of letters (digraph/trigraph)</div>
     </div>
   </div>
 
   <script>
     let dragSymbol = null;
 
-    function allowDrop(event) {
-      event.preventDefault();
+    function allowDrop(e) {
+      e.preventDefault();
     }
 
-    function drag(event) {
-      dragSymbol = event.target;
+    function drag(e) {
+      dragSymbol = e.target.cloneNode(true);
+      dragSymbol.classList.remove("resizing");
     }
 
-    function dropAnywhere(event) {
-      event.preventDefault();
-      if (dragSymbol) {
-        const clone = dragSymbol.cloneNode(true);
-        clone.style.position = 'absolute';
-        const displayRect = document.getElementById("word-display").getBoundingClientRect();
-        const symbolX = event.clientX - displayRect.left - clone.offsetWidth / 2;
-        const symbolY = event.clientY - displayRect.top - clone.offsetHeight / 2;
-        clone.style.left = `${symbolX}px`;
-        clone.style.top = `${symbolY}px`;
-        clone.setAttribute("draggable", false);
-        clone.style.cursor = 'grab';
+    function dropSymbol(e) {
+      if (!dragSymbol) return;
+      const clone = dragSymbol.cloneNode(true);
+      const container = document.getElementById("word-display");
+      const containerRect = container.getBoundingClientRect();
+      const x = e.clientX - containerRect.left;
+      const y = e.clientY - containerRect.top;
 
-        if (clone.classList.contains("multi-letter-wrapper")) {
-          clone.addEventListener('mousedown', initDragResize);
-        } else {
-          clone.addEventListener('mousedown', dragMove);
-        }
+      clone.style.position = "absolute";
+      clone.style.left = x + "px";
+      clone.style.top = y + "px";
+      clone.setAttribute("draggable", false);
+      clone.style.cursor = "grab";
 
-        document.getElementById("word-display").appendChild(clone);
-        dragSymbol = null;
+      if (clone.classList.contains("circle-symbol")) {
+        const resizeHandle = document.createElement("div");
+        resizeHandle.className = "circle-resize-handle";
+        clone.appendChild(resizeHandle);
+
+        resizeHandle.addEventListener("mousedown", function (e) {
+          e.stopPropagation();
+          const startX = e.clientX;
+          const startWidth = parseInt(window.getComputedStyle(clone).width, 10);
+          function doDrag(ev) {
+            const newWidth = startWidth + ev.clientX - startX;
+            clone.style.width = newWidth + "px";
+            clone.style.height = newWidth + "px";
+          }
+          function stopDrag() {
+            document.removeEventListener("mousemove", doDrag);
+            document.removeEventListener("mouseup", stopDrag);
+          }
+          document.addEventListener("mousemove", doDrag);
+          document.addEventListener("mouseup", stopDrag);
+        });
       }
+
+      clone.onmousedown = dragMove;
+      container.appendChild(clone);
+      dragSymbol = null;
     }
 
     function dragMove(e) {
-      e.preventDefault();
-      const el = e.target;
+      const el = e.target.closest(".draggable, .circle-symbol");
+      if (!el || el.classList.contains("resizing")) return;
+
       const shiftX = e.clientX - el.getBoundingClientRect().left;
       const shiftY = e.clientY - el.getBoundingClientRect().top;
 
       function moveAt(pageX, pageY) {
         const containerRect = document.getElementById("word-display").getBoundingClientRect();
-        el.style.left = pageX - containerRect.left - shiftX + 'px';
-        el.style.top = pageY - containerRect.top - shiftY + 'px';
+        el.style.left = pageX - containerRect.left - shiftX + "px";
+        el.style.top = pageY - containerRect.top - shiftY + "px";
       }
 
       function onMouseMove(event) {
         moveAt(event.pageX, event.pageY);
       }
 
-      document.addEventListener('mousemove', onMouseMove);
-      el.onmouseup = function () {
-        document.removeEventListener('mousemove', onMouseMove);
-        el.onmouseup = null;
+      document.addEventListener("mousemove", onMouseMove);
+      document.onmouseup = function () {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.onmouseup = null;
       };
     }
 
-    function initDragResize(e) {
-      const el = e.target;
-      if (!el.classList.contains('multi-letter-wrapper')) return;
-      let isResizing = false;
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startWidth = el.offsetWidth;
-      const startHeight = el.offsetHeight;
-
-      function onMouseMove(ev) {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
-        if (!isResizing && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-          isResizing = true;
-        }
-        if (isResizing) {
-          el.style.width = startWidth + dx + "px";
-          el.style.height = startHeight + dy + "px";
-        }
-      }
-
-      function onMouseUp() {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        if (!isResizing) {
-          dragMove(e);
-        }
-      }
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-    }
-
     function renderWord() {
-      const input = document.getElementById("word-input").value;
+      const word = document.getElementById("word-input").value;
       const display = document.getElementById("word-display");
       display.innerHTML = "";
 
-      for (let i = 0; i < input.length; i++) {
-        const letter = input[i];
+      for (let i = 0; i < word.length; i++) {
+        const letter = word[i];
         const container = document.createElement("div");
         container.className = "letter-container";
 
-        const middle = document.createElement("div");
-        middle.className = "letter-display";
-        middle.textContent = letter;
+        const letterDiv = document.createElement("div");
+        letterDiv.className = "letter-display";
+        letterDiv.textContent = letter;
 
-        container.appendChild(middle);
+        container.appendChild(letterDiv);
         display.appendChild(container);
       }
     }
 
-    function resetSymbols() {
+    function resetAll() {
       document.getElementById("symbols").innerHTML = "";
       document.getElementById("word-display").innerHTML = "";
       document.getElementById("word-input").value = "";
 
       const symbols = [
-        { id: 'symbol-v', text: 'V', className: 'draggable v-symbol' },
-        { id: 'symbol-c', text: 'C', className: 'draggable c-symbol' },
-        { id: 'symbol-breve', text: '˘', className: 'draggable breve-symbol' },
-        { id: 'symbol-macron', text: '¯', className: 'draggable macron-symbol' },
-        { id: 'symbol-pipe', text: '|', className: 'draggable symbol-vertical' },
-        { id: 'symbol-circle', text: '', className: 'multi-letter-wrapper' },
+        { id: "v", text: "V", className: "v-symbol" },
+        { id: "c", text: "C", className: "c-symbol" },
+        { id: "breve", text: "˘", className: "symbol-mark" },
+        { id: "macron", text: "¯", className: "symbol-mark" },
+        { id: "pipe", text: "|", className: "symbol-vertical" },
+        { id: "circle", text: "", className: "circle-symbol" }
       ];
 
       for (let sym of symbols) {
         const el = document.createElement("div");
-        el.className = sym.className;
+        el.className = `draggable ${sym.className}`;
         el.setAttribute("draggable", true);
-        el.setAttribute("id", sym.id);
+        el.id = `symbol-${sym.id}`;
         el.textContent = sym.text;
-        el.addEventListener("dragstart", drag);
+        el.ondragstart = drag;
         document.getElementById("symbols").appendChild(el);
       }
     }
 
     document.getElementById("word-input").addEventListener("keypress", function (e) {
-      if (e.key === 'Enter') {
-        renderWord();
-      }
+      if (e.key === "Enter") renderWord();
     });
 
-    resetSymbols();
+    resetAll();
   </script>
 </body>
 </html>
