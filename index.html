@@ -27,6 +27,17 @@
       position: relative;
     }
     .draggable {
+      #symbol-breve, #symbol-macron {
+  border: none;
+  background: none;
+  font-size: 2.5em;
+  font-weight: bold;
+  width: auto;
+  height: auto;
+  line-height: normal;
+  padding: 0 10px;
+}
+
       display: inline-block;
       margin: 5px;
       padding: 10px;
@@ -57,15 +68,19 @@
       color: white;
       background-color: green;
     }
-    .multi-letter-wrapper {
-      position: absolute;
-      border: 2px solid #000;
-      border-radius: 50%;
-      padding: 5px;
-      background-color: rgba(255, 255, 255, 0.6);
-      resize: both;
-      overflow: hidden;
-    }
+      .multi-letter-wrapper {
+  border: 2px solid #000;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
+  resize: both;
+  overflow: hidden;
+  min-width: 40px;
+  min-height: 40px;
+  width: 60px;
+  height: 60px;
+  display: inline-block;
+  cursor: move;
+}
     #word-display {
       position: relative;
       height: 300px;
@@ -77,12 +92,12 @@
       flex-wrap: wrap;
     }
     .symbol-vertical {
-      width: 2px;
-      height: 100px;
-      background: black;
-      cursor: grab;
-      border-radius: 1px;
-    }
+  width: 1px;
+  height: 100px;
+  background: black;
+  cursor: grab;
+  border-radius: 1px;
+}
   </style>
 </head>
 <body>
@@ -104,7 +119,6 @@
       <li><strong>C</strong> in a circle: Consonant</li>
       <li><strong>˘</strong>: Breve (short vowel)</li>
       <li><strong>¯</strong>: Macron (long vowel)</li>
-      <li><strong>.</strong>: Syllable splitter (dot)</li>
       <li><strong>|</strong>: Syllable splitter (pipe)</li>
       <li><strong>◯</strong>: Group of letters making one sound (digraph, trigraph, etc)</li>
     </ul>
@@ -196,7 +210,6 @@
         { id: 'symbol-c', text: 'C', className: 'c-symbol' },
         { id: 'symbol-breve', text: '˘' },
         { id: 'symbol-macron', text: '¯' },
-        { id: 'symbol-dot', text: '.' },
         { id: 'symbol-pipe', text: '|', className: 'symbol-vertical' },
         { id: 'symbol-circle', text: '', className: 'multi-letter-wrapper' },
       ];
