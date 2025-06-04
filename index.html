@@ -20,23 +20,26 @@
     .letter-container {
       display: inline-block;
       text-align: center;
-      margin: 0 20px;
+      margin: 0 10px;
       width: 60px;
       position: relative;
     }
 
     .letter-display {
       font-size: 2em;
-      margin: 40px 0;
+      margin: 20px 0; /* reduced vertical space */
     }
 
     .symbol-slot {
       position: absolute;
-      bottom: -50px;
+      bottom: -30px; /* reduced vertical distance */
       left: 50%;
       transform: translateX(-50%);
       width: 60px;
       height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .draggable {
@@ -55,7 +58,6 @@
       position: relative;
     }
 
-    /* Fix for breve and macron: not in circles */
     #symbol-breve, #symbol-macron {
       border: none !important;
       background: none !important;
@@ -98,11 +100,12 @@
       min-height: 40px;
       display: inline-block;
       position: absolute;
+      cursor: move;
     }
 
     #word-display {
       position: relative;
-      height: 300px;
+      height: 200px; /* reduced height */
       margin-bottom: 30px;
       border: 1px solid #ccc;
       display: flex;
@@ -162,13 +165,36 @@
     }
 
     function drag(event) {
-      dragSymbol = event.target.cloneNode(true);
+      dragSymbol = event.target;
     }
 
     function dropAnywhere(event) {
       event.preventDefault();
       if (!dragSymbol) return;
 
+      const id = dragSymbol.getAttribute("id");
+
+      // Prevent circle from duplicating
+      if (id === 'symbol-circle') {
+        const newCircle = dragSymbol.cloneNode(true);
+        newCircle.className = "multi-letter-wrapper";
+        newCircle.removeAttribute("id");
+
+        const wordDisplay = document.getElementById("word-display");
+        const displayRect = wordDisplay.getBoundingClientRect();
+        const x = event.clientX - displayRect.left;
+        const y = event.clientY - displayRect.top;
+
+        newCircle.style.left = `${x}px`;
+        newCircle.style.top = `${y}px`;
+
+        // Allow dragging
+        newCircle.onmousedown = dragMove;
+        wordDisplay.appendChild(newCircle);
+        return;
+      }
+
+      // Clone for other symbols
       const symbol = dragSymbol.cloneNode(true);
       symbol.classList.remove("draggable");
       symbol.style.position = "absolute";
@@ -180,7 +206,7 @@
       const y = event.clientY - displayRect.top;
 
       // SNAP V/C to nearest letter container
-      if (dragSymbol.id === 'symbol-v' || dragSymbol.id === 'symbol-c') {
+      if (id === 'symbol-v' || id === 'symbol-c') {
         const containers = wordDisplay.querySelectorAll(".letter-container");
         let closest = null;
         let closestDistance = Infinity;
@@ -201,17 +227,6 @@
           slot.appendChild(symbol);
           return;
         }
-      }
-
-      // Make circle resizable
-      if (dragSymbol.id === 'symbol-circle') {
-        symbol.className = "multi-letter-wrapper";
-        symbol.style.left = `${x}px`;
-        symbol.style.top = `${y}px`;
-        symbol.style.resize = "both";
-        symbol.style.overflow = "auto";
-        wordDisplay.appendChild(symbol);
-        return;
       }
 
       // All others: free position
