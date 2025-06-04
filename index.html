@@ -91,9 +91,10 @@
       cursor: grab;
     }
     .symbol-breve, .symbol-macron {
-      font-size: 2em;
+      font-size: 3em;
       background: none;
       border: none;
+      margin-bottom: 5px;
     }
     .multi-letter-wrapper {
       border: 2px solid #000;
@@ -147,12 +148,21 @@
       const display = document.getElementById("word-display");
       const rect = display.getBoundingClientRect();
       symbol.style.position = 'absolute';
+
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-      symbol.style.left = `${x - symbol.offsetWidth / 2}px`;
-      symbol.style.top = `${y - symbol.offsetHeight / 2}px`;
+
       symbol.style.cursor = 'move';
       symbol.onmousedown = dragMove;
+
+      // Position adjustments
+      if (symbol.classList.contains('v-symbol') || symbol.classList.contains('c-symbol')) {
+        symbol.style.left = `${x - symbol.offsetWidth / 2}px`;
+        symbol.style.top = `${y - symbol.offsetHeight / 2}px`;
+      } else {
+        symbol.style.left = `${x - symbol.offsetWidth / 2}px`;
+        symbol.style.top = `${y - symbol.offsetHeight}px`;
+      }
 
       if (symbol.classList.contains('multi-letter-wrapper')) {
         symbol.style.resize = 'horizontal';
