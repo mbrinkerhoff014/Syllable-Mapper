@@ -20,12 +20,9 @@
     .letter-container {
       display: inline-block;
       text-align: center;
-      margin: 0 10px;
+      margin: 0 5px;
       width: 60px;
       position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .letter-display {
@@ -34,40 +31,21 @@
       z-index: 1;
     }
 
-    .symbol-container {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
-
-    #symbols {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      max-width: 600px;
-    }
-
-    .draggable {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px;
-      font-weight: bold;
-      cursor: grab;
-      user-select: none;
+    .above-symbol, .below-symbol {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       font-size: 2em;
+      cursor: pointer;
+      z-index: 2;
     }
 
-    .v-symbol {
-      border: 2px solid red;
-      color: white;
-      background-color: red;
+    .above-symbol {
+      top: -40px;
     }
 
-    .c-symbol {
-      border: 2px solid green;
-      color: white;
-      background-color: green;
+    .below-symbol {
+      bottom: -40px;
     }
 
     .multi-letter-wrapper {
@@ -90,6 +68,14 @@
       background: rgba(0, 0, 0, 0.2);
     }
 
+    .divider {
+      position: absolute;
+      width: 4px;
+      height: 100px;
+      background-color: black;
+      cursor: ew-resize;
+    }
+
     #word-display {
       position: relative;
       height: 280px;
@@ -97,161 +83,92 @@
       border: 1px solid #ccc;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-end;
       flex-wrap: wrap;
-    }
-
-    .above-letter, .below-letter {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 2.5em;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.above-letter {
-  top: -40px;
-}
-
-.below-letter {
-  bottom: -40px;
-}
-
-
-    #legend {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 20px;
     }
   </style>
 </head>
 <body>
   <h1>Syllable Mapper</h1>
   <input id="word-input" type="text" placeholder="Type a word here..." />
-  <button onclick="resetSymbols()">Reset</button>
+  <button onclick="renderWord()">Enter</button>
+  <button onclick="resetWord()">Reset</button>
+  <button onclick="addDivider()">Add Divider</button>
 
   <div id="word-display"></div>
 
-  <div class="symbol-container">
-    <div id="symbols"></div>
-  </div>
+  <script>
+    const aboveOptions = ["", "\u02D8", "\u00AF"];
+    const belowOptions = ["", "V", "C"];
+    let currentResize = null;
 
-  <div id="legend">
-    <div><strong>V</strong>: Vowel</div>
-    <div><strong>C</strong>: Consonant</div>
-    <div><strong>˘</strong>: Breve (short vowel)</div>
-    <div><strong>¯</strong>: Macron (long vowel)</div>
-    <div><strong>|</strong>: Syllable splitter (pipe)</div>
-    <div><strong>▭</strong>: Group of letters (expandable)</div>
-  </div>
+    function renderWord() {
+      const input = document.getElementById("word-input").value.trim();
+      const display = document.getElementById("word-display");
+      display.innerHTML = "";
 
- <script>
-  let dragSymbol = null;
+      for (let i = 0; i < input.length; i++) {
+        const container = document.createElement("div");
+        container.className = "letter-container";
 
-  function allowDrop(event) {
-    event.preventDefault();
-  }
+        const above = document.createElement("div");
+        above.className = "above-symbol";
+        above.onclick = () => {
+          const idx = aboveOptions.indexOf(above.textContent);
+          above.textContent = aboveOptions[(idx + 1) % aboveOptions.length];
+        };
 
-  function drag(event) {
-    dragSymbol = event.target.cloneNode(true);
-  }
+        const letterEl = document.createElement("div");
+        letterEl.className = "letter-display";
+        letterEl.textContent = input[i];
 
-  function dropOnLetter(event) {
-    event.preventDefault();
-    if (!dragSymbol) return;
+        const below = document.createElement("div");
+        below.className = "below-symbol";
+        below.onclick = () => {
+          const idx = belowOptions.indexOf(below.textContent);
+          below.textContent = belowOptions[(idx + 1) % belowOptions.length];
+        };
 
-    const container = event.currentTarget;
-    const symbol = dragSymbol.cloneNode(true);
-    const symbolType = dragSymbol.textContent;
+        container.appendChild(above);
+        container.appendChild(letterEl);
+        container.appendChild(below);
 
-    symbol.style.position = "absolute";
-    symbol.style.cursor = "move";
-    symbol.setAttribute("draggable", false);
-
-    if (symbolType === '˘' || symbolType === '¯') {
-      symbol.classList.add('above-letter');
-      const existing = container.querySelector('.above-letter');
-      if (existing) existing.remove();
-    } else if (symbolType === 'V' || symbolType === 'C') {
-      symbol.classList.add('below-letter');
-      const existing = container.querySelector('.below-letter');
-      if (existing) existing.remove();
-    } else {
-      symbol.style.left = "0";
-      symbol.style.top = "60px"; // fallback if not a targeted type
+        display.appendChild(container);
+      }
     }
 
-    container.appendChild(symbol);
-    dragSymbol = null;
-  }
-
-  function renderWord() {
-    const input = document.getElementById("word-input").value.trim();
-    const display = document.getElementById("word-display");
-    display.innerHTML = "";
-
-    if (!input) return;
-
-    const wordContainer = document.createElement("div");
-    wordContainer.style.display = "flex";
-    wordContainer.style.justifyContent = "center";
-    wordContainer.style.alignItems = "center";
-    wordContainer.style.flexWrap = "wrap";
-
-    for (let i = 0; i < input.length; i++) {
-      const letter = input[i];
-      const container = document.createElement("div");
-      container.className = "letter-container";
-      container.dataset.index = i;
-
-      const letterEl = document.createElement("div");
-      letterEl.className = "letter-display";
-      letterEl.textContent = letter;
-
-      container.appendChild(letterEl);
-
-      // Allow drop directly on the letter container
-      container.addEventListener("dragover", allowDrop);
-      container.addEventListener("drop", dropOnLetter);
-
-      wordContainer.appendChild(container);
+    function resetWord() {
+      document.getElementById("word-input").value = "";
+      document.getElementById("word-display").innerHTML = "";
     }
 
-    display.appendChild(wordContainer);
-  }
+    function addDivider() {
+      const display = document.getElementById("word-display");
+      const divider = document.createElement("div");
+      divider.className = "divider";
+      divider.style.left = "100px";
+      divider.style.top = "90px";
 
-  function resetSymbols() {
-    const symbolContainer = document.getElementById("symbols");
-    symbolContainer.innerHTML = "";
-    document.getElementById("word-display").innerHTML = "";
-    document.getElementById("word-input").value = "";
+      divider.onmousedown = function (e) {
+        const shiftX = e.clientX - divider.getBoundingClientRect().left;
 
-    const symbols = [
-      { id: 'symbol-v', text: 'V', className: 'v-symbol' },
-      { id: 'symbol-c', text: 'C', className: 'c-symbol' },
-      { id: 'symbol-breve', text: '˘' },
-      { id: 'symbol-macron', text: '¯' },
-      { id: 'symbol-rect', text: '▭' }
-    ];
+        function moveAt(pageX) {
+          divider.style.left = pageX - display.getBoundingClientRect().left - shiftX + 'px';
+        }
 
-    for (let sym of symbols) {
-      const el = document.createElement("div");
-      el.className = sym.className ? `draggable ${sym.className}` : "draggable";
-      el.setAttribute("draggable", true);
-      el.setAttribute("id", sym.id);
-      el.textContent = sym.text;
-      el.ondragstart = drag;
-      symbolContainer.appendChild(el);
+        function onMouseMove(e) {
+          moveAt(e.pageX);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.onmouseup = () => {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.onmouseup = null;
+        };
+      };
+
+      display.appendChild(divider);
     }
-  }
-
-  document.getElementById("word-input").addEventListener("keypress", function (e) {
-    if (e.key === 'Enter') renderWord();
-  });
-
-  resetSymbols(); // Load symbols on first visit
-</script>
+  </script>
 </body>
 </html>
