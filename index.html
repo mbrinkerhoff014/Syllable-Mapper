@@ -38,6 +38,7 @@
       font-size: 2em;
       cursor: pointer;
       z-index: 2;
+      user-select: none;
     }
 
     .above-symbol {
@@ -46,6 +47,16 @@
 
     .below-symbol {
       bottom: -40px;
+    }
+
+    .divider {
+      position: absolute;
+      width: 4px;
+      height: 80px;
+      background-color: black;
+      cursor: ew-resize;
+      top: 60px; /* vertically between above/below symbols */
+      z-index: 3;
     }
 
     .multi-letter-wrapper {
@@ -66,14 +77,6 @@
       height: 100%;
       cursor: ew-resize;
       background: rgba(0, 0, 0, 0.2);
-    }
-
-    .divider {
-      position: absolute;
-      width: 4px;
-      height: 100px;
-      background-color: black;
-      cursor: ew-resize;
     }
 
     #word-display {
@@ -98,9 +101,8 @@
   <div id="word-display"></div>
 
   <script>
-    const aboveOptions = ["", "\u02D8", "\u00AF"];
+    const aboveOptions = ["", "\u02D8", "\u00AF"]; // ˘, ¯
     const belowOptions = ["", "V", "C"];
-    let currentResize = null;
 
     function renderWord() {
       const input = document.getElementById("word-input").value.trim();
@@ -113,6 +115,7 @@
 
         const above = document.createElement("div");
         above.className = "above-symbol";
+        above.textContent = "";
         above.onclick = () => {
           const idx = aboveOptions.indexOf(above.textContent);
           above.textContent = aboveOptions[(idx + 1) % aboveOptions.length];
@@ -124,6 +127,7 @@
 
         const below = document.createElement("div");
         below.className = "below-symbol";
+        below.textContent = "";
         below.onclick = () => {
           const idx = belowOptions.indexOf(below.textContent);
           below.textContent = belowOptions[(idx + 1) % belowOptions.length];
@@ -146,8 +150,7 @@
       const display = document.getElementById("word-display");
       const divider = document.createElement("div");
       divider.className = "divider";
-      divider.style.left = "100px";
-      divider.style.top = "90px";
+      divider.style.left = "100px"; // Default position
 
       divider.onmousedown = function (e) {
         const shiftX = e.clientX - divider.getBoundingClientRect().left;
