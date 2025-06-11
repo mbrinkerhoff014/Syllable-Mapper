@@ -102,20 +102,22 @@
     }
 
     .above-letter, .below-letter {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 3em;
-      pointer-events: none;
-    }
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2.5em;
+  pointer-events: none;
+  z-index: 2;
+}
 
-    .above-letter {
-      top: -60px;
-    }
+.above-letter {
+  top: -40px;
+}
 
-    .below-letter {
-      bottom: -60px;
-    }
+.below-letter {
+  bottom: -40px;
+}
+
 
     #legend {
       display: grid;
@@ -210,9 +212,53 @@
     }
 
     function renderWord() {
-      const input = document.getElementById("word-input").value;
-      const display = document.getElementById("word-display");
-      display.innerHTML = "";
+  const input = document.getElementById("word-input").value;
+  const display = document.getElementById("word-display");
+  display.innerHTML = "";
+
+  for (let i = 0; i < input.length; i++) {
+    const letter = input[i];
+    const container = document.createElement("div");
+    container.className = "letter-container";
+    container.dataset.index = i;
+
+    const letterEl = document.createElement("div");
+    letterEl.className = "letter-display";
+    letterEl.textContent = letter;
+
+    container.appendChild(letterEl);
+
+    container.addEventListener("dragover", allowDrop);
+    container.addEventListener("drop", dropOnLetter);
+
+    display.appendChild(container);
+  }
+}
+    function dropOnLetter(event) {
+  event.preventDefault();
+  if (!dragSymbol) return;
+
+  const container = event.currentTarget;
+  const symbol = dragSymbol.cloneNode(true);
+  const symbolType = dragSymbol.textContent;
+
+  symbol.style.position = "absolute";
+  symbol.style.cursor = "move";
+  symbol.setAttribute("draggable", false);
+
+  if (symbolType === '˘' || symbolType === '¯') {
+    symbol.classList.add('above-letter');
+  } else if (symbolType === 'V' || symbolType === 'C') {
+    symbol.classList.add('below-letter');
+  } else {
+    symbol.style.left = "0";
+    symbol.style.top = "60px"; // fallback position
+  }
+
+  container.appendChild(symbol);
+  dragSymbol = null;
+}
+
 
       const wordContainer = document.createElement("div");
       wordContainer.style.display = "flex";
