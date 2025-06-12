@@ -42,11 +42,11 @@
     }
 
     .above-symbol {
-      top: -40px;
+      top: 0;
     }
 
     .below-symbol {
-      bottom: -40px;
+      bottom: 0;
     }
 
     .divider {
@@ -55,28 +55,8 @@
       height: 80px;
       background-color: black;
       cursor: ew-resize;
-      top: 60px; /* vertically between above/below symbols */
+      top: 100px;
       z-index: 3;
-    }
-
-    .multi-letter-wrapper {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 60px;
-      background-color: rgba(0, 0, 255, 0.1);
-      border: 2px solid blue;
-      cursor: move;
-    }
-
-    .resize-handle {
-      position: absolute;
-      right: -5px;
-      top: 0;
-      width: 10px;
-      height: 100%;
-      cursor: ew-resize;
-      background: rgba(0, 0, 0, 0.2);
     }
 
     #word-display {
@@ -86,8 +66,8 @@
       border: 1px solid #ccc;
       display: flex;
       justify-content: center;
-      align-items: flex-end;
-      flex-wrap: wrap;
+      align-items: center;
+      flex-wrap: nowrap;
     }
   </style>
 </head>
@@ -101,7 +81,7 @@
   <div id="word-display"></div>
 
   <script>
-    const aboveOptions = ["", "\u02D8", "\u00AF"]; // ˘, ¯
+    const aboveOptions = ["", "\u02D8", "\u00AF"];
     const belowOptions = ["", "V", "C"];
 
     function renderWord() {
@@ -150,7 +130,7 @@
       const display = document.getElementById("word-display");
       const divider = document.createElement("div");
       divider.className = "divider";
-      divider.style.left = "100px"; // Default position
+      divider.style.left = "100px";
 
       divider.onmousedown = function (e) {
         const shiftX = e.clientX - divider.getBoundingClientRect().left;
