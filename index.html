@@ -67,7 +67,7 @@
 
     .multi-letter-wrapper {
       position: absolute;
-      top: 140px; /* adjusted from 80px to 140px */
+      top: 110px;
       height: 60px;
       background-color: rgba(0, 0, 255, 0.1);
       border: 2px solid blue;
@@ -231,6 +231,12 @@
 
     document.addEventListener("mouseup", function () {
       currentResize = null;
+    });
+
+    document.getElementById("word-input").addEventListener("keypress", function (e) {
+      if (e.key === 'Enter') {
+        renderWord();
+      }
     });
   </script>
 </body>
