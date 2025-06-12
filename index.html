@@ -106,6 +106,22 @@
       justify-content: center;
       align-items: center;
     }
+
+    .struck {
+  position: relative;
+}
+
+.struck::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  border-top: 3px solid red;
+  transform: rotate(-20deg);
+  pointer-events: none;
+}
+
   </style>
 </head>
 <body>
@@ -146,8 +162,11 @@
         };
 
         const letterEl = document.createElement("div");
-        letterEl.className = "letter-display";
-        letterEl.textContent = input[i];
+letterEl.className = "letter-display";
+letterEl.textContent = input[i];
+letterEl.onclick = () => {
+  letterEl.classList.toggle("struck");
+};
 
         const below = document.createElement("div");
         below.className = "below-symbol";
