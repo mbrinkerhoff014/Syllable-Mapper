@@ -63,16 +63,18 @@
       cursor: ew-resize;
       top: 80px;
       z-index: 3;
+      touch-action: none;
     }
 
     .multi-letter-wrapper {
       position: absolute;
-      top: 110px;
+      top: 130px;
       height: 60px;
       background-color: rgba(0, 0, 255, 0.1);
       border: 2px solid blue;
       cursor: move;
       z-index: 2;
+      touch-action: none;
     }
 
     .resize-handle {
@@ -110,6 +112,7 @@
     const aboveOptions = ["", "\u02D8", "\u00AF"];
     const belowOptions = ["", "V", "C"];
     let currentResize = null;
+    let currentDrag = null;
 
     function renderWord() {
       const input = document.getElementById("word-input").value.trim();
@@ -157,30 +160,44 @@
       document.getElementById("word-display").innerHTML = "";
     }
 
+    function makeDraggable(el) {
+      let offsetX = 0;
+
+      const move = (x) => {
+        el.style.left = `${x - offsetX}px`;
+      };
+
+      const onTouchMove = (e) => {
+        move(e.touches[0].clientX - el.parentElement.getBoundingClientRect().left);
+      };
+
+      const onMouseMove = (e) => {
+        move(e.clientX - el.parentElement.getBoundingClientRect().left);
+      };
+
+      el.addEventListener("mousedown", (e) => {
+        offsetX = e.clientX - el.getBoundingClientRect().left;
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", () => {
+          document.removeEventListener("mousemove", onMouseMove);
+        }, { once: true });
+      });
+
+      el.addEventListener("touchstart", (e) => {
+        offsetX = e.touches[0].clientX - el.getBoundingClientRect().left;
+        document.addEventListener("touchmove", onTouchMove);
+        document.addEventListener("touchend", () => {
+          document.removeEventListener("touchmove", onTouchMove);
+        }, { once: true });
+      });
+    }
+
     function addDivider() {
       const display = document.getElementById("word-display");
       const divider = document.createElement("div");
       divider.className = "divider";
       divider.style.left = "100px";
-
-      divider.onmousedown = function (e) {
-        const shiftX = e.clientX - divider.getBoundingClientRect().left;
-
-        function moveAt(pageX) {
-          divider.style.left = pageX - display.getBoundingClientRect().left - shiftX + 'px';
-        }
-
-        function onMouseMove(e) {
-          moveAt(e.pageX);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.onmouseup = () => {
-          document.removeEventListener('mousemove', onMouseMove);
-          document.onmouseup = null;
-        };
-      };
-
+      makeDraggable(divider);
       display.appendChild(divider);
     }
 
@@ -197,28 +214,13 @@
         e.stopPropagation();
         currentResize = { element: box, startX: e.clientX, startWidth: box.offsetWidth };
       };
-
-      box.appendChild(resizeHandle);
-
-      box.onmousedown = e => {
-        if (e.target.className === 'resize-handle') return;
-        const shiftX = e.clientX - box.getBoundingClientRect().left;
-
-        function moveAt(pageX) {
-          box.style.left = pageX - display.getBoundingClientRect().left - shiftX + 'px';
-        }
-
-        function onMouseMove(e) {
-          moveAt(e.pageX);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.onmouseup = () => {
-          document.removeEventListener('mousemove', onMouseMove);
-          document.onmouseup = null;
-        };
+      resizeHandle.ontouchstart = e => {
+        e.stopPropagation();
+        currentResize = { element: box, startX: e.touches[0].clientX, startWidth: box.offsetWidth };
       };
 
+      box.appendChild(resizeHandle);
+      makeDraggable(box);
       display.appendChild(box);
     }
 
@@ -229,7 +231,18 @@
       }
     });
 
+    document.addEventListener("touchmove", function (e) {
+      if (currentResize) {
+        const delta = e.touches[0].clientX - currentResize.startX;
+        currentResize.element.style.width = currentResize.startWidth + delta + "px";
+      }
+    });
+
     document.addEventListener("mouseup", function () {
+      currentResize = null;
+    });
+
+    document.addEventListener("touchend", function () {
       currentResize = null;
     });
 
