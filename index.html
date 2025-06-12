@@ -58,7 +58,7 @@
     .divider {
       position: absolute;
       width: 4px;
-      height: 100px;
+      height: 120px;
       background-color: black;
       cursor: ew-resize;
       top: 160px;
@@ -68,13 +68,14 @@
 
     .multi-letter-wrapper {
       position: absolute;
-      top: 118px;
+      top: 130px;
       height: 60px;
       background-color: rgba(0, 0, 255, 0.1);
       border: 2px solid blue;
       cursor: move;
       z-index: 2;
       touch-action: none;
+      touch-action: pinch-zoom;
     }
 
     .resize-handle {
@@ -112,6 +113,8 @@
     const aboveOptions = ["", "\u02D8", "\u00AF"];
     const belowOptions = ["", "V", "C"];
     let currentResize = null;
+    let pinchStartWidth = null;
+    let pinchStartDistance = null;
 
     function renderWord() {
       const input = document.getElementById("word-input").value.trim();
@@ -192,9 +195,11 @@
       });
 
       el.addEventListener("touchstart", (e) => {
-        offsetX = e.touches[0].clientX - el.getBoundingClientRect().left;
-        document.addEventListener("touchmove", onTouchMove);
-        document.addEventListener("touchend", stopTouchMove);
+        if (e.touches.length === 1) {
+          offsetX = e.touches[0].clientX - el.getBoundingClientRect().left;
+          document.addEventListener("touchmove", onTouchMove);
+          document.addEventListener("touchend", stopTouchMove);
+        }
       });
     }
 
@@ -225,6 +230,25 @@
         currentResize = { element: box, startX: e.touches[0].clientX, startWidth: box.offsetWidth };
       };
 
+      box.addEventListener("touchstart", function(e) {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          pinchStartWidth = box.offsetWidth;
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          pinchStartDistance = Math.abs(dx);
+        }
+      });
+
+      box.addEventListener("touchmove", function(e) {
+        if (e.touches.length === 2 && pinchStartDistance !== null) {
+          e.preventDefault();
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const currentDistance = Math.abs(dx);
+          const scale = currentDistance / pinchStartDistance;
+          box.style.width = `${pinchStartWidth * scale}px`;
+        }
+      });
+
       box.appendChild(resizeHandle);
       makeDraggable(box);
       display.appendChild(box);
@@ -238,7 +262,7 @@
     });
 
     document.addEventListener("touchmove", function (e) {
-      if (currentResize) {
+      if (currentResize && e.touches.length === 1) {
         const delta = e.touches[0].clientX - currentResize.startX;
         currentResize.element.style.width = currentResize.startWidth + delta + "px";
       }
@@ -250,6 +274,7 @@
 
     document.addEventListener("touchend", function () {
       currentResize = null;
+      pinchStartDistance = null;
     });
 
     document.getElementById("word-input").addEventListener("keypress", function (e) {
