@@ -68,7 +68,7 @@
 
     .multi-letter-wrapper {
       position: absolute;
-      top: 180px;
+      top: 140px;
       height: 60px;
       background-color: rgba(0, 0, 255, 0.1);
       border: 2px solid blue;
@@ -177,22 +177,24 @@
 
       const stopMouseMove = () => {
         document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", stopMouseMove);
       };
 
       const stopTouchMove = () => {
         document.removeEventListener("touchmove", onTouchMove);
+        document.removeEventListener("touchend", stopTouchMove);
       };
 
       el.addEventListener("mousedown", (e) => {
         offsetX = e.clientX - el.getBoundingClientRect().left;
         document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", stopMouseMove, { once: true });
+        document.addEventListener("mouseup", stopMouseMove);
       });
 
       el.addEventListener("touchstart", (e) => {
         offsetX = e.touches[0].clientX - el.getBoundingClientRect().left;
         document.addEventListener("touchmove", onTouchMove);
-        document.addEventListener("touchend", stopTouchMove, { once: true });
+        document.addEventListener("touchend", stopTouchMove);
       });
     }
 
