@@ -29,34 +29,60 @@
       font-size: 2.5em;
       position: relative;
       z-index: 1;
+      line-height: 60px;
     }
 
     .above-symbol, .below-symbol {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
+      position: relative;
       font-size: 2em;
       cursor: pointer;
-      z-index: 2;
       user-select: none;
-    }
-
-    .above-symbol {
-      top: 0;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed #ccc;
+      margin-bottom: 5px;
     }
 
     .below-symbol {
-      bottom: 0;
+      margin-top: 5px;
+    }
+
+    .letter-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .divider {
       position: absolute;
       width: 4px;
-      height: 80px;
+      height: 120px;
       background-color: black;
       cursor: ew-resize;
-      top: 100px;
+      top: 80px;
       z-index: 3;
+    }
+
+    .multi-letter-wrapper {
+      position: absolute;
+      top: 80px;
+      height: 60px;
+      background-color: rgba(0, 0, 255, 0.1);
+      border: 2px solid blue;
+      cursor: move;
+      z-index: 2;
+    }
+
+    .resize-handle {
+      position: absolute;
+      right: -5px;
+      top: 0;
+      width: 10px;
+      height: 100%;
+      cursor: ew-resize;
+      background: rgba(0, 0, 0, 0.2);
     }
 
     #word-display {
@@ -67,7 +93,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-wrap: nowrap;
     }
   </style>
 </head>
@@ -77,12 +102,14 @@
   <button onclick="renderWord()">Enter</button>
   <button onclick="resetWord()">Reset</button>
   <button onclick="addDivider()">Add Divider</button>
+  <button onclick="addBox()">Add Expandable Box</button>
 
   <div id="word-display"></div>
 
   <script>
     const aboveOptions = ["", "\u02D8", "\u00AF"];
     const belowOptions = ["", "V", "C"];
+    let currentResize = null;
 
     function renderWord() {
       const input = document.getElementById("word-input").value.trim();
@@ -92,6 +119,9 @@
       for (let i = 0; i < input.length; i++) {
         const container = document.createElement("div");
         container.className = "letter-container";
+
+        const letterBox = document.createElement("div");
+        letterBox.className = "letter-box";
 
         const above = document.createElement("div");
         above.className = "above-symbol";
@@ -113,9 +143,10 @@
           below.textContent = belowOptions[(idx + 1) % belowOptions.length];
         };
 
-        container.appendChild(above);
-        container.appendChild(letterEl);
-        container.appendChild(below);
+        letterBox.appendChild(above);
+        letterBox.appendChild(letterEl);
+        letterBox.appendChild(below);
+        container.appendChild(letterBox);
 
         display.appendChild(container);
       }
@@ -152,6 +183,55 @@
 
       display.appendChild(divider);
     }
+
+    function addBox() {
+      const display = document.getElementById("word-display");
+      const box = document.createElement("div");
+      box.className = "multi-letter-wrapper";
+      box.style.left = "100px";
+      box.style.width = '60px';
+
+      const resizeHandle = document.createElement("div");
+      resizeHandle.className = "resize-handle";
+      resizeHandle.onmousedown = e => {
+        e.stopPropagation();
+        currentResize = { element: box, startX: e.clientX, startWidth: box.offsetWidth };
+      };
+
+      box.appendChild(resizeHandle);
+
+      box.onmousedown = e => {
+        if (e.target.className === 'resize-handle') return;
+        const shiftX = e.clientX - box.getBoundingClientRect().left;
+
+        function moveAt(pageX) {
+          box.style.left = pageX - display.getBoundingClientRect().left - shiftX + 'px';
+        }
+
+        function onMouseMove(e) {
+          moveAt(e.pageX);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.onmouseup = () => {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.onmouseup = null;
+        };
+      };
+
+      display.appendChild(box);
+    }
+
+    document.addEventListener("mousemove", function (e) {
+      if (currentResize) {
+        const delta = e.clientX - currentResize.startX;
+        currentResize.element.style.width = currentResize.startWidth + delta + "px";
+      }
+    });
+
+    document.addEventListener("mouseup", function () {
+      currentResize = null;
+    });
   </script>
 </body>
 </html>
