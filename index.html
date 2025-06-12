@@ -157,9 +157,19 @@
         above.className = "above-symbol";
         above.textContent = "";
         above.onclick = () => {
-          const idx = aboveOptions.indexOf(above.textContent);
-          above.textContent = aboveOptions[(idx + 1) % aboveOptions.length];
-        };
+  const idx = aboveOptions.indexOf(above.textContent);
+  const nextSymbol = aboveOptions[(idx + 1) % aboveOptions.length];
+  above.textContent = nextSymbol;
+
+  if (nextSymbol === "ə") {
+    above.style.fontSize = "2.5em"; // smaller size for schwa
+  } else if (nextSymbol === "˘" || nextSymbol === "¯") {
+    above.style.fontSize = "3.5em"; // larger size for macron/breve
+  } else {
+    above.style.fontSize = "3.5em"; // default
+  }
+};
+
 
         const letterEl = document.createElement("div");
 letterEl.className = "letter-display";
