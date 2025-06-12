@@ -61,14 +61,14 @@
       height: 120px;
       background-color: black;
       cursor: ew-resize;
-      top: 80px;
+      top: 120px;
       z-index: 3;
       touch-action: none;
     }
 
     .multi-letter-wrapper {
       position: absolute;
-      top: 130px;
+      top: 180px;
       height: 60px;
       background-color: rgba(0, 0, 255, 0.1);
       border: 2px solid blue;
@@ -89,7 +89,7 @@
 
     #word-display {
       position: relative;
-      height: 280px;
+      height: 320px;
       margin-bottom: 10px;
       border: 1px solid #ccc;
       display: flex;
@@ -175,20 +175,24 @@
         move(e.clientX - el.parentElement.getBoundingClientRect().left);
       };
 
+      const stopMouseMove = () => {
+        document.removeEventListener("mousemove", onMouseMove);
+      };
+
+      const stopTouchMove = () => {
+        document.removeEventListener("touchmove", onTouchMove);
+      };
+
       el.addEventListener("mousedown", (e) => {
         offsetX = e.clientX - el.getBoundingClientRect().left;
         document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", () => {
-          document.removeEventListener("mousemove", onMouseMove);
-        }, { once: true });
+        document.addEventListener("mouseup", stopMouseMove, { once: true });
       });
 
       el.addEventListener("touchstart", (e) => {
         offsetX = e.touches[0].clientX - el.getBoundingClientRect().left;
         document.addEventListener("touchmove", onTouchMove);
-        document.addEventListener("touchend", () => {
-          document.removeEventListener("touchmove", onTouchMove);
-        }, { once: true });
+        document.addEventListener("touchend", stopTouchMove, { once: true });
       });
     }
 
